@@ -1,0 +1,400 @@
+var G = round(random(0,50));
+var projectileVersion = 1;
+var isLeftPressed = false;
+var isRightPressed = false;
+var isSpacePressed = false;
+var Projectiles = [];
+var enemyProjectile = [];
+var enemy = 1;
+var enemyAmount = 0;
+var numEnemy = [];
+var eindex = 0;
+var enemySize = 100;
+var enemyX = -100;
+var enemyY = random(0,200);
+var enemyPX = enemyX;
+var enemyPY = enemyY;
+var enemyHealth = 30;
+var enemyMax = enemyHealth;
+var characterAngle = 0;
+var projectileSpeed = 5;
+var projectiles = [];
+var invincible = false;
+var Pause = true;
+var KeyLeft = false;
+var KeyRight = false;
+var ySpeed = 2.5;
+var xSpeed = 2.5;     
+var yPos = 325;
+var shotDelay = 0;
+var xPos = random(0,400);
+var cX = 75;
+var cY = 75;
+var enemyImg = getImage("avatars/orange-juice-squid");
+var C3PO = getImage("starwars/c3po");
+var BB8 = getImage("starwars/bb8");
+var R2D2 = getImage("starwars/r2d2");
+var Luke = getImage("starwars/luke");
+var Leia = getImage("starwars/leia");
+var Yoda = getImage("starwars/yoda");
+var charImg = [C3PO, R2D2, Luke, Leia, Yoda,BB8];
+var name = ["C3PO","R2D2","Luke","Leia","Yoda","BB8"];
+var power = [4, 4, 4, 8, 8, 6];
+var toughness = [6,6,7,6,7,4];
+var speed = [3, 3, 6, 7, 8, 9];
+var cindex = 0;
+var maxLives = toughness[cindex];
+var numLives = toughness[cindex];
+var gameState = "Intro";
+var colourComponent = 55;
+var colourChange = 1;
+var backgnd = getImage("landscapes/lava");
+var backgnd0 = getImage("landscapes/mountains-sunset");
+var losebackgnd = getImage("landscapes/beach-in-hawaii");
+var winbackgnd = getImage("landscapes/waterfall_niagara-falls");
+var colourFade = function(){
+    background(colourComponent,colourComponent,colourComponent);
+    colourComponent -= colourChange;
+};
+var fadeInOut = function(){
+    if(colourComponent > 200 || colourComponent < 0){
+        colourChange = -colourChange;
+    }
+};
+var introScreen = function(){
+    background(0,0,255);
+    image(backgnd0, 0, 0, 400, 400);
+    textSize(30);
+    fill(25,0,0);
+    text("Starwars shooter", 90,130);
+    fill(255,0,0);
+    text("Starwars shooter", 89,129);
+    fill(25);
+    ellipse(200,200,108,108);
+    fill(212);
+    ellipse(200,200,100,100);
+    fill(0,255,0);
+    text("play", 173, 205);
+};
+var mainScreen = function(){
+    colourFade();
+    fadeInOut();
+    textSize(25);
+    fill(0,0,155);
+    text("CHARACTER SELECTOR", 50, 51);
+    fill(0,0,255);
+    text("CHARACTER SELECTOR", 52, 51);
+    textSize(20);
+    fill(0,100,0);
+    text("Power: " + power[cindex], 148,325);
+    text("Toughness: " + toughness[cindex], 128,350);
+    text("Speed: " + speed[cindex], 148,375);
+    textSize(35);
+    text(name[cindex], 138,109);
+    fill(0,255,0);
+    text(name[cindex], 140,109);
+    textSize(20);
+    text("Power: " + power[cindex], 150,325);
+    text("Toughness: " + toughness[cindex], 130,350);
+    text("Speed: " + speed[cindex], 150,375);
+    fill(212, 212, 212);
+    noStroke();
+    ellipse(198, 270, 86, 40);
+    image(charImg[cindex], 130, 140, 140, 140);
+    image(getImage("space/plus"), 30, 195, 45, 50);
+    image(getImage("space/minus"), 325, 195, 45, 50);
+    fill(0,0,255);
+    ellipse(330,330, 100, 100);
+    textSize(25);
+    fill(155,0,0);
+    text("Play", 303, 335);
+    fill(255,0,0);
+    textSize(25);
+    text("Play", 305, 335);
+    Pause = false;
+};
+var characterSelector = function(){
+    if(cindex < 0){
+        cindex = name.length - 1;
+    } else if(cindex > name.length - 1){
+        cindex = 0;
+    }
+};
+var changeCharacter = function(){
+    if (mouseY > 195 && mouseY < 245){
+        if(mouseX > 325 && mouseX < 365){
+            cindex++;
+        } else if(mouseX > 30 && mouseX < 75 && gameState === "Main"){
+            cindex--;
+        }
+    }
+};
+var buttonClicked = function(){
+    if(gameState === "Main" && dist(mouseX,mouseY,330,330) < 50){
+        gameState = "Game";
+    }
+    if(gameState === "Intro" && dist(mouseX,mouseY, 200, 200) < 50){
+        gameState = "Main";
+    }
+    if(gameState === "Pause" && dist(mouseX, mouseY, 300, 300) < 75){
+        gameState = "Intro";
+    }
+    if(gameState === "Pause" && dist(mouseX, mouseY, 100, 300) < 75){
+        gameState = "Main";
+    }
+    if(gameState === "levelComplete" && dist(mouseX, mouseY, 200, 250) < 50){
+        gameState = "Game";
+    }
+};
+var moveCharacter = function(){
+    if(isLeftPressed){
+        xPos -= speed[cindex];
+    }
+    if(isRightPressed){
+        xPos += speed[cindex];
+    }
+};
+var keyReleased = function(){
+    if(keyCode === 37){
+        isLeftPressed = false;
+    }
+    if(keyCode === 39){
+        isRightPressed = false;
+    }
+};
+var hurtPlayer = function(){
+    if(!invincible){
+        numLives--;
+    }
+};
+var healPlayer = function(){
+    if(gameState === "Game" && numLives < maxLives){
+        numLives++;
+    }
+};
+var checkGameOver = function(){
+    if(numLives <= 0){
+        numLives = 0;
+        gameState = "Gameover";
+    }
+};
+var drawLives = function(){
+    for(var i = 0; i < maxLives; i++){
+        if( i< numLives) {
+            image(getImage("space/healthheart"), 10 + 30 * i, 10, 30, 30);
+        } else {
+            image(getImage("space/minus"), 10 + 30 * i, 10, 30, 30);
+        }
+    }
+    if(invincible) {
+        image(getImage("cute/Star"), 5, 30, 40, 60);
+    }
+};
+var createEnemy = function(x, spawnTime){
+    if (enemy === 1){
+        fill(255,0,0);
+        ellipse(enemyPX, enemyPY, 10,10);
+        enemyPY += 2;
+        if(enemyPY > 410){
+            enemyPX = enemyX+enemySize/2;
+            enemyPY = enemyY+enemySize/2;
+        }
+        rect(enemyX, enemyY+100, 100, 10);
+        fill(0,255,0);
+        rect(enemyX, enemyY+100, 100*(enemyHealth/enemyMax), 10);
+        image(enemyImg,enemyX, enemyY, enemySize, enemySize);
+        enemyX += 2.5;
+        if(enemyX >= 500){
+            enemyX = -100;
+            enemyY = random(0, 200);
+        }
+    }
+};
+var pauseMenu = function(){
+    Pause = true;
+    background(255);
+    textSize(50);
+    text(" Paused", 100, 100);
+    fill(0,0,255);
+    textSize(25);
+    ellipse(300,300, 150, 150);
+    fill(255,0,0);
+    text("Main\nMenu", 270, 290);
+    fill(0,0,255);
+    ellipse(100, 300, 150, 150);
+    fill(255,0,0);
+    text("Character\n  Select", 50, 290);
+    if(keyCode === 66){
+        gameState = "Game";
+    } else {
+        gameState = "Pause";
+    }
+};
+var CheckPauseScreen = function(){
+    if(keyCode === 80){
+        pauseMenu();
+    }
+};
+var loopScreen = function(){
+    if(xPos < -75){
+        xPos = 475;
+    }
+    if(xPos > 475){
+        xPos = -75;
+    }
+    if(yPos < -75){
+        yPos = 475;
+    }
+    if(yPos > 475){
+        yPos = -75;
+    }
+};
+var projectile = function(x,y){
+    this.x = x;
+    this.y = y;
+    this.size = 10;
+    this.ySpeed = speed;
+};
+var projectile1 = function(){
+    projectiles.push(new projectile(xPos + 35, yPos + 10));
+    shotDelay = 20;
+};
+var projectile2 = function(){
+    projectiles.push(new projectile(xPos + 55, yPos + 10));
+    shotDelay = 20;
+    projectiles.push(new projectile(xPos + 15, yPos + 10));
+};
+var projectileCollision = function(projectile,x,y,size){
+    if(dist(projectile.x,projectile.y,x,y)<size){
+        return true;
+    }
+    return false;
+};
+var moveProjectile = function(){
+    for(var i = 0; i < projectiles.length; i++){
+        projectiles[i].y -=projectileSpeed;
+        ellipse(projectiles[i].x, projectiles[i].y,10,10);
+    }
+};
+var enemyCollision = function(){
+    for(var i =0; i < projectiles.length; i++){
+        if(projectileCollision(projectiles[i],enemyX+enemySize/2,enemyY+enemySize/2,enemySize/2) && enemyHealth > 0){
+            enemyHealth -= power[cindex]; 
+            projectiles[i].y = -50;
+        }
+    }
+    if(enemyHealth <= 0){
+        enemy = 0;
+    }
+    if(enemy === 0){
+        gameState = "levelComplete";
+    }
+};
+var levelComplete = function(){
+    image(winbackgnd, 0, 0, 400, 400);
+    textSize(40);
+    fill(0,255,0);
+    text("           Good job \n you beat the first level",0, 100);
+    fill(255,0,0);
+    ellipse(200,250,100,100);
+    fill(0,255,0);
+    textSize(30);
+    text("Next",168,257);
+};
+var gameScreen = function(){
+    if(G === 13 || G === 12 || G === 14){
+        gameState = "Gb";
+    } else {
+        shotDelay--;
+        image(backgnd, 0, 0, 400, 400);
+        image(charImg[cindex],xPos, yPos, cX,cY);
+        Pause = false;
+        moveCharacter();
+        drawLives();
+        checkGameOver();
+        CheckPauseScreen();
+        enemyCollision();
+        loopScreen();
+        moveProjectile();
+        createEnemy(2, 50);
+    }
+};
+var gameBroken = function(){
+    background(25,100,50);
+    fill(20);
+    textSize(35);
+    text("          *Error* \n   Game not found \n return to main menu", 35, 100);
+};
+var keyPressed = function(){
+    if(keyCode === 75){
+        hurtPlayer();
+    }
+    if(keyCode === 72){
+        healPlayer();
+    }
+    if(keyCode === 73 && gameState === "Game"){
+        invincible = !invincible;
+    }
+    if(keyCode === 32 && gameState === "Gameover"){
+        gameState = "Main";
+    }
+    if(keyCode === 50 && shotDelay <= 0){
+        projectileVersion = 2;
+    }
+    if(keyCode === 49 && shotDelay <= 0){
+        projectileVersion = 1;
+    }
+    if(keyCode === 32 && shotDelay <= 0){
+        if(projectileVersion === 1){
+            projectile1();
+        }
+        if(projectileVersion === 2){
+            projectile2();
+        }
+    }
+    if(keyCode === 32 && gameState === "Gb"){
+        gameState = "Main";
+    }
+    if (keyCode === 37){
+        isLeftPressed = true;
+    }
+    if (keyCode === 39){
+        isRightPressed = true;
+    }
+};
+var gameoverScreen = function(){
+    textSize(25);
+    image(losebackgnd, 0, 0, 400, 400);
+    textSize(50);
+    text("     Game Over.\nClick to play again",-5, 100);
+};
+var draw = function(){
+    switch(gameState){
+        case "Intro":
+            introScreen();
+        break;
+        case "Main":
+            mainScreen();
+        break;
+        case "Game":
+            gameScreen();
+        break;
+        case "Gb":
+            gameBroken();
+        break;
+        case "Pause":
+            pauseMenu();
+        break;
+        case"levelComplete":
+            levelComplete();
+        break;
+        case"Gameover":
+            gameoverScreen();
+        break;    
+    }
+};
+var mouseClicked = function(){
+    changeCharacter();
+    characterSelector();
+    buttonClicked();
+};
